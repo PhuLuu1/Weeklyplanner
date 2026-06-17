@@ -828,7 +828,7 @@ const PCOLS = ['#2d5016','#1a4a7c','#5b3fa0','#9a2d5f','#b86a00','#6b3d1e','#1a5
 const HCOLS = ['#2d5016','#1a4a7c','#5b3fa0','#9a2d5f','#b86a00','#6b3d1e','#c0392b','#1a5a4a','#8a3a00','#1a5a6e'];
 const DTAGS = [{name:'Thesis',color:'#2d5016'},{name:'GIS',color:'#1a4a7c'},{name:'Planning',color:'#5b3fa0'},{name:'Land Law',color:'#9a2d5f'},{name:'Environment',color:'#b86a00'},{name:'Internship',color:'#6b3d1e'},{name:'Exam prep',color:'#1a5a4a'},{name:'Personal',color:'#8a3a00'}];
 let drag=null, projDrag=null, nid=1, npid=1, nptid=1, nhid=1;
-let eid=null, epid=null, eptid=null, ehid=null;
+let eid=null, epid=null, eptid=null, eptPid=null, ehid=null;
 let spc=PCOLS[0], shc=HCOLS[0];
 
 // ── INIT ──────────────────────────────────────────────────────────
@@ -1294,10 +1294,13 @@ function rPRail() {
         chk.innerHTML=task.done?'<span style="color:#fff;font-size:9px">\u2713</span>':'';
         chk.addEventListener('click',e=>{e.stopPropagation();task.done=!task.done;render();});
         row.appendChild(chk);
-        // text
+        // text — click to open the full edit modal
         const txt=document.createElement('div');
         txt.className='prc-task-txt'+(task.done?' done':'');
         txt.textContent=task.text;
+        txt.style.cursor='pointer';
+        txt.title='Click to edit';
+        txt.addEventListener('click',e=>{e.stopPropagation();editPT(proj.id,task.id);});
         row.appendChild(txt);
         // day badge / assign
         const dayBtn=document.createElement('span');
@@ -1562,9 +1565,9 @@ function saveProj(){
 }
 document.getElementById('pn').addEventListener('keydown',e=>{if(e.key==='Escape')closeMo('mo-p');});
 
-function openNewPT(){if(!S.apid)return;eptid=null;document.getElementById('pt-t').textContent='Add task';document.getElementById('ptn').value='';document.getElementById('ptpri').value='normal';document.getElementById('ptdue').value='';document.getElementById('ptnotes').value='';document.getElementById('pttime').value='';document.getElementById('ptdur').value='';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
-function editPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;const t=p.tasks.find(t=>t.id===tid);if(!t)return;eptid=tid;S.apid=pid;document.getElementById('pt-t').textContent='Edit task';document.getElementById('ptn').value=t.text;document.getElementById('ptpri').value=t.priority||'normal';document.getElementById('ptdue').value=t.due||'';document.getElementById('ptnotes').value=t.notes||'';document.getElementById('pttime').value=t.time||'';document.getElementById('ptdur').value=t.dur||'';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
-function savePT(){const text=document.getElementById('ptn').value.trim();if(!text){document.getElementById('ptn').focus();return;}const pri=document.getElementById('ptpri').value,due=document.getElementById('ptdue').value,notes=document.getElementById('ptnotes').value.trim();const time=document.getElementById('pttime').value,dur=document.getElementById('ptdur').value;const p=S.projects.find(p=>p.id===S.apid);if(!p)return;if(eptid!==null){const t=p.tasks.find(t=>t.id===eptid);if(t){t.text=text;t.priority=pri;t.due=due;t.notes=notes;t.time=time;t.dur=dur;}}else{p.tasks.push({id:nptid++,text,priority:pri,due,notes,done:false,time,dur});}closeMo('mo-pt');eptid=null;rPD(S.apid);rPRail();save();}
+function openNewPT(){if(!S.apid)return;eptid=null;eptPid=S.apid;document.getElementById('pt-t').textContent='Add task';document.getElementById('ptn').value='';document.getElementById('ptpri').value='normal';document.getElementById('ptdue').value='';document.getElementById('ptnotes').value='';document.getElementById('pttime').value='';document.getElementById('ptdur').value='';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
+function editPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;const t=p.tasks.find(t=>t.id===tid);if(!t)return;eptid=tid;eptPid=pid;document.getElementById('pt-t').textContent='Edit task';document.getElementById('ptn').value=t.text;document.getElementById('ptpri').value=t.priority||'normal';document.getElementById('ptdue').value=t.due||'';document.getElementById('ptnotes').value=t.notes||'';document.getElementById('pttime').value=t.time||'';document.getElementById('ptdur').value=t.dur||'';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
+function savePT(){const text=document.getElementById('ptn').value.trim();if(!text){document.getElementById('ptn').focus();return;}const pri=document.getElementById('ptpri').value,due=document.getElementById('ptdue').value,notes=document.getElementById('ptnotes').value.trim();const time=document.getElementById('pttime').value,dur=document.getElementById('ptdur').value;const targetPid=(eptPid!==null&&eptPid!==undefined)?eptPid:S.apid;const p=S.projects.find(p=>p.id===targetPid);if(!p)return;if(eptid!==null){const t=p.tasks.find(t=>t.id===eptid);if(t){t.text=text;t.priority=pri;t.due=due;t.notes=notes;t.time=time;t.dur=dur;}}else{p.tasks.push({id:nptid++,text,priority:pri,due,notes,done:false,time,dur});}closeMo('mo-pt');eptid=null;eptPid=null;rPRail();if(document.getElementById('pview').classList.contains('active'))rPD(targetPid);save();}
 document.getElementById('ptn').addEventListener('keydown',e=>{if(e.key==='Escape')closeMo('mo-pt');});
 
 function openHabitM(){ehid=null;shc=HCOLS[0];document.getElementById('hm-t').textContent='New habit';document.getElementById('hn').value='';document.getElementById('hemo').value='';document.getElementById('hgoal').value='7';mkCS('h-colors',HCOLS,shc,'shc');openMo('mo-h');setTimeout(()=>document.getElementById('hn').focus(),150);}

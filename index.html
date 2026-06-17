@@ -406,6 +406,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <button class="bti" onclick="openStatsM()" title="Stats" style="font-size:13px">&#128202;</button>
     <button class="bti" onclick="expData()" title="Export">&#11015;</button>
     <button class="bti" onclick="impData()" title="Import">&#11014;</button>
+    <button class="bti" onclick="syncAllToCalendar()" title="Sync all scheduled tasks to Google Calendar" style="font-size:14px">&#128197;</button>
     <button class="bti" id="cloud-btn" onclick="openCloudSettings()" title="Cloud sync" style="font-size:14px;position:relative">&#9729;<span id="cloud-dot" style="display:none;position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--ac)"></span></button>
   </div>
 </aside>
@@ -609,7 +610,7 @@ function getStored(k) {
 function loadKeys() {
   // Hardcoded credentials (baked in at build time)
   JBIN_KEY = '$2a$10$/lajMqDZerxPOih7aN5NBeAAQoKvb8pv/mMEBS1EooR/6iicy5jC.';
-  GAS_URL  = 'https://script.google.com/macros/s/AKfycbw85JeC2ORtFyrVlyZ8UumrP8jx5w9x-XKimtWTM26wBSzzBxt771L7cat6uJv5R0T6hg/exec';
+  GAS_URL  = 'https://script.google.com/macros/s/AKfycbxl4L8U0KANVAzQfNJ8I-mH9LqXtPfAktXOYjG3E9VJ5_DsKIBGLZ4XEgynGHCad5TS/exec';
   // binId is auto-generated on first save — still load from storage
   binId    = getStored('wplan_binid');
   // Override with stored key if user connected manually (allows key rotation)
@@ -1592,9 +1593,26 @@ async function gcalPush(title, dateKey, time, dur, details) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'gcal', title, dateKey, time, dur, details })
     });
-    const j = await r.json();
-    return j.ok;
-  } catch(e) { console.error('gcal push:', e); return false; }
+    const txt = await r.text();
+    let j;
+    try { j = JSON.parse(txt); }
+    catch(parseErr) {
+      // GAS returned HTML (login page / error) instead of JSON
+      console.error('GAS returned non-JSON:', txt.slice(0,200));
+      showToast('\u26a0 GAS chưa deploy v4 hoặc chưa cấp quyền Calendar');
+      return false;
+    }
+    if (!j.ok) {
+      console.error('GAS gcal error:', j.error);
+      showToast('\u26a0 ' + (j.error || 'Calendar sync failed').slice(0,60));
+      return false;
+    }
+    return true;
+  } catch(e) {
+    console.error('gcal push:', e);
+    showToast('\u26a0 Lỗi kết nối GAS: ' + (e.message||'').slice(0,40));
+    return false;
+  }
 }
 
 async function syncTaskToGCal(taskId) {
@@ -1603,6 +1621,51 @@ async function syncTaskToGCal(taskId) {
   showToast('Đang thêm vào Google Calendar...');
   const ok = await gcalPush(t.text, t.day, t.time||'', t.dur||'', (t.tag?'['+t.tag+'] ':'') + (t.notes||''));
   showToast(ok ? '\u2713 Đã thêm vào Google Calendar' : '\u26a0 Sync calendar thất bại');
+}
+
+// ── SYNC ALL scheduled tasks to Google Calendar ─────────────────
+async function syncAllToCalendar() {
+  if (!GAS_URL) { showToast('Cần kết nối Google Apps Script trước (nút \u2601).'); return; }
+  // Gather all scheduled regular tasks + scheduled project tasks (not done)
+  const items = [];
+  S.tasks.forEach(t => {
+    if (t.day && t.day !== 'backlog' && !t.done) {
+      items.push({ title: t.text, dateKey: t.day, time: t.time||'', dur: t.dur||'', details: (t.tag?'['+t.tag+'] ':'') + (t.notes||'') });
+    }
+  });
+  S.projects.forEach(p => (p.tasks||[]).forEach(pt => {
+    if (pt.scheduledDay && !pt.done) {
+      items.push({ title: pt.text, dateKey: pt.scheduledDay, time: pt.time||'', dur: pt.dur||'', details: '[' + p.name + '] ' + (pt.notes||'') });
+    }
+  }));
+  if (items.length === 0) { showToast('Không có task nào (đã xếp ngày & chưa xong) để sync.'); return; }
+  if (!confirm('Thêm ' + items.length + ' task vào Google Calendar?\n\n(Mỗi task = 1 sự kiện. Task đã xong hoặc chưa có ngày sẽ bỏ qua.)')) return;
+
+  showToast('Đang sync ' + items.length + ' task...');
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'gcalBatch', items })
+    });
+    const txt = await r.text();
+    let j;
+    try { j = JSON.parse(txt); }
+    catch(e) {
+      console.error('GAS non-JSON response:', txt.slice(0,300));
+      showToast('\u26a0 GAS chưa deploy v4 / chưa cấp quyền Calendar');
+      return;
+    }
+    if (j.ok) {
+      showToast('\u2713 Đã thêm ' + (j.created||items.length) + ' sự kiện vào Calendar');
+    } else {
+      console.error('GAS batch error:', j.error);
+      showToast('\u26a0 ' + (j.error||'Sync failed').slice(0,70));
+    }
+  } catch(e) {
+    console.error('syncAll error:', e);
+    showToast('\u26a0 Lỗi kết nối GAS: ' + (e.message||'').slice(0,40));
+  }
 }
 
 // ── ROLLOVER: move unfinished past tasks to backlog ─────────────

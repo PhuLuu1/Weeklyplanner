@@ -610,7 +610,7 @@ function getStored(k) {
 function loadKeys() {
   // Hardcoded credentials (baked in at build time)
   JBIN_KEY = '$2a$10$/lajMqDZerxPOih7aN5NBeAAQoKvb8pv/mMEBS1EooR/6iicy5jC.';
-  GAS_URL  = 'https://script.google.com/macros/s/AKfycbxl4L8U0KANVAzQfNJ8I-mH9LqXtPfAktXOYjG3E9VJ5_DsKIBGLZ4XEgynGHCad5TS/exec';
+  GAS_URL  = 'https://script.google.com/macros/s/AKfycbyAK2SSWpgUyJzyTx3RsbPsxpJpXxKAjYu3SF8J6fp5BIYG3buNE6xYe8O7I4B0FZ5a/exec';
   // binId is auto-generated on first save — still load from storage
   binId    = getStored('wplan_binid');
   // Override with stored key if user connected manually (allows key rotation)
@@ -1579,19 +1579,34 @@ function addProjTaskToCalendar(projId, taskId) {
   const p = S.projects.find(p => p.id === projId); if (!p) return;
   const t = p.tasks.find(t => t.id === taskId); if (!t) return;
   if (!t.scheduledDay) { showToast('Task chưa xếp vào tuần — hãy gán ngày trước.'); return; }
-  const url = buildGCalUrl(t.text, t.scheduledDay, t.time||'', t.dur||'', '[' + p.name + '] ' + (t.notes||''));
-  window.open(url, '_blank');
+  // If GAS connected, sync with project color; otherwise fall back to opening a tab (no color via URL)
+  if (GAS_URL) {
+    syncProjTaskToGCal(projId, taskId);
+  } else {
+    const url = buildGCalUrl(t.text, t.scheduledDay, t.time||'', t.dur||'', '[' + p.name + '] ' + (t.notes||''));
+    window.open(url, '_blank');
+  }
+}
+
+// Sync a single project task to Google Calendar WITH the project's color
+async function syncProjTaskToGCal(projId, taskId) {
+  const p = S.projects.find(p => p.id === projId); if (!p) return;
+  const t = p.tasks.find(t => t.id === taskId); if (!t) return;
+  if (!t.scheduledDay) { showToast('Task chưa xếp vào tuần.'); return; }
+  showToast('Đang thêm vào Google Calendar...');
+  const ok = await gcalPush(t.text, t.scheduledDay, t.time||'', t.dur||'', '[' + p.name + '] ' + (t.notes||''), p.color||'');
+  showToast(ok ? '\u2713 Đã thêm (màu ' + p.name + ')' : '\u26a0 Sync thất bại — kiểm tra GAS');
 }
 
 // ── GAS auto-sync to Google Calendar ─────────────────────────────
 // Pushes a task as a real event into the user's Google Calendar via GAS
-async function gcalPush(title, dateKey, time, dur, details) {
+async function gcalPush(title, dateKey, time, dur, details, colorHex) {
   if (!GAS_URL) { showToast('Cần kết nối Google Apps Script trước (nút ☁).'); return false; }
   try {
     const r = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gcal', title, dateKey, time, dur, details })
+      body: JSON.stringify({ action: 'gcal', title, dateKey, time, dur, details, colorHex: colorHex||'' })
     });
     const txt = await r.text();
     let j;
@@ -1630,12 +1645,14 @@ async function syncAllToCalendar() {
   const items = [];
   S.tasks.forEach(t => {
     if (t.day && t.day !== 'backlog' && !t.done) {
-      items.push({ title: t.text, dateKey: t.day, time: t.time||'', dur: t.dur||'', details: (t.tag?'['+t.tag+'] ':'') + (t.notes||'') });
+      // standalone task: no color (default Calendar color)
+      items.push({ title: t.text, dateKey: t.day, time: t.time||'', dur: t.dur||'', details: (t.tag?'['+t.tag+'] ':'') + (t.notes||''), colorHex: '' });
     }
   });
   S.projects.forEach(p => (p.tasks||[]).forEach(pt => {
     if (pt.scheduledDay && !pt.done) {
-      items.push({ title: pt.text, dateKey: pt.scheduledDay, time: pt.time||'', dur: pt.dur||'', details: '[' + p.name + '] ' + (pt.notes||'') });
+      // project task: tag event with the project's color
+      items.push({ title: pt.text, dateKey: pt.scheduledDay, time: pt.time||'', dur: pt.dur||'', details: '[' + p.name + '] ' + (pt.notes||''), colorHex: p.color||'' });
     }
   }));
   if (items.length === 0) { showToast('Không có task nào (đã xếp ngày & chưa xong) để sync.'); return; }

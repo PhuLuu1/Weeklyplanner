@@ -106,6 +106,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
 .prc{border:1px solid var(--bd);border-radius:var(--r2);margin-bottom:8px;overflow:hidden;background:var(--sf)}
 .prc-head{padding:9px 11px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:var(--tr)}
 .prc-head:hover{background:var(--sf2)}
+.prc-grip{font-size:11px;color:var(--fa);cursor:grab;flex-shrink:0;opacity:0;transition:var(--tr);user-select:none}
+.prc-head:hover .prc-grip{opacity:.7}
+.prc-edit,.prc-del{background:none;border:none;cursor:pointer;font-size:12px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;opacity:0;transition:var(--tr);padding:0}
+.prc-head:hover .prc-edit,.prc-head:hover .prc-del{opacity:.6}
+.prc-edit{color:var(--mu)}.prc-edit:hover{opacity:1;color:var(--ac);background:var(--al)}
+.prc-del{color:var(--fa)}.prc-del:hover{opacity:1;color:var(--re);background:var(--rl)}
+.prc.proj-dragging{opacity:.4}
+.prc.proj-drop-above{border-top:2px solid var(--ac)}
 .prc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .prc-name{font-size:12px;font-weight:600;color:var(--tx);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prc-meta{font-size:10px;font-family:var(--mo);color:var(--fa);flex-shrink:0}
@@ -526,6 +534,23 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mf"><label class="ml">Task name</label><input class="mi" id="ptn" type="text" autocomplete="off"></div>
     <div class="mf"><label class="ml">Priority</label><select class="mi" id="ptpri"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select></div>
     <div class="mf"><label class="ml">Due date</label><input class="mi" id="ptdue" type="date"></div>
+    <div class="mf"><label class="ml">Time blocking (optional)</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="mi" id="pttime" type="time" style="flex:1" title="Start time">
+        <span style="font-size:12px;color:var(--mu);flex-shrink:0">for</span>
+        <select class="mi" id="ptdur" style="flex:1">
+          <option value="">All-day</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+          <option value="120">2 hours</option>
+          <option value="180">3 hours</option>
+        </select>
+      </div>
+      <div style="font-size:11px;color:var(--fa);margin-top:4px">Áp dụng khi task được xếp vào tuần &amp; sync Calendar</div>
+    </div>
     <div class="mf"><label class="ml">Notes</label><textarea class="mi" id="ptnotes" rows="2" style="resize:vertical"></textarea></div>
     <div class="mac"><button class="bmd bg" onclick="closeMo('mo-pt')">Cancel</button><button class="bmd bp" onclick="savePT()">Save</button></div>
   </div>
@@ -802,7 +827,7 @@ const DPAL = ['#2d5016','#1a4a7c','#5b3fa0','#9a2d5f','#b86a00','#6b3d1e','#1a5a
 const PCOLS = ['#2d5016','#1a4a7c','#5b3fa0','#9a2d5f','#b86a00','#6b3d1e','#1a5a4a','#c0392b','#8a3a00','#1a5a6e','#3d5a80','#6b4c11'];
 const HCOLS = ['#2d5016','#1a4a7c','#5b3fa0','#9a2d5f','#b86a00','#6b3d1e','#c0392b','#1a5a4a','#8a3a00','#1a5a6e'];
 const DTAGS = [{name:'Thesis',color:'#2d5016'},{name:'GIS',color:'#1a4a7c'},{name:'Planning',color:'#5b3fa0'},{name:'Land Law',color:'#9a2d5f'},{name:'Environment',color:'#b86a00'},{name:'Internship',color:'#6b3d1e'},{name:'Exam prep',color:'#1a5a4a'},{name:'Personal',color:'#8a3a00'}];
-let drag=null, nid=1, npid=1, nptid=1, nhid=1;
+let drag=null, projDrag=null, nid=1, npid=1, nptid=1, nhid=1;
 let eid=null, epid=null, eptid=null, ehid=null;
 let spc=PCOLS[0], shc=HCOLS[0];
 
@@ -1193,7 +1218,7 @@ function rPRail() {
     return;
   }
   body.innerHTML='';
-  S.projects.forEach(proj=>{
+  S.projects.forEach((proj,pidx)=>{
     const tot=proj.tasks.length, dn=proj.tasks.filter(t=>t.done).length, pct=tot?Math.round(dn/tot*100):0;
     const du=dLeft(proj.deadline);
     const duc=du===null?'var(--fa)':du<0?'var(--re)':du<=3?'var(--ab)':'var(--fa)';
@@ -1202,15 +1227,44 @@ function rPRail() {
 
     const card=document.createElement('div');
     card.className='prc'+(opened?' open':'');
+    card.dataset.pidx=pidx;
+    card.draggable=true;
+
+    // ── project reorder drag ──
+    card.addEventListener('dragstart',e=>{
+      // only start project-drag from the header area, not task rows
+      projDrag=pidx; card.classList.add('proj-dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.stopPropagation();
+    });
+    card.addEventListener('dragend',()=>{projDrag=null;card.classList.remove('proj-dragging');document.querySelectorAll('.prc').forEach(x=>x.classList.remove('proj-drop-above'));});
+    card.addEventListener('dragover',e=>{
+      if(projDrag===null||projDrag===pidx)return;
+      e.preventDefault();e.stopPropagation();
+      card.classList.add('proj-drop-above');
+    });
+    card.addEventListener('dragleave',()=>card.classList.remove('proj-drop-above'));
+    card.addEventListener('drop',e=>{
+      if(projDrag===null||projDrag===pidx)return;
+      e.preventDefault();e.stopPropagation();
+      card.classList.remove('proj-drop-above');
+      reorderProjects(projDrag,pidx);
+    });
 
     // header
     const head=document.createElement('div');head.className='prc-head';
-    head.innerHTML='<div class="prc-dot" style="background:'+proj.color+'"></div>'
+    head.innerHTML='<span class="prc-grip" title="Drag to reorder">\u2630</span>'
+      +'<div class="prc-dot" style="background:'+proj.color+'"></div>'
       +'<span class="prc-name">'+esc(proj.name)+'</span>'
       +'<span class="prc-meta" style="color:'+duc+'">'+(dut||'')+'</span>'
       +'<span class="prc-meta">'+dn+'/'+tot+'</span>'
+      +'<button class="prc-edit" title="Edit / color">\u270e</button>'
+      +'<button class="prc-del" title="Delete project">\u00d7</button>'
       +'<span class="prc-caret">\u25b6</span>';
-    head.addEventListener('click',()=>{
+    // caret/name toggles open; edit & delete buttons have their own handlers
+    head.addEventListener('click',(e)=>{
+      if(e.target.classList.contains('prc-edit')){e.stopPropagation();openEditProj(proj.id);return;}
+      if(e.target.classList.contains('prc-del')){e.stopPropagation();delProj(proj.id);return;}
       if(!S._railOpen)S._railOpen={};
       S._railOpen[proj.id]=!S._railOpen[proj.id];
       rPRail();
@@ -1266,6 +1320,8 @@ function rPRail() {
         }
         // drag to schedule
         row.addEventListener('dragstart',e=>{
+          e.stopPropagation();
+          projDrag=null; // ensure project-reorder isn't triggered
           drag='PROJ:'+proj.id+':'+task.id;
           row.classList.add('dragging');
           e.dataTransfer.effectAllowed='move';
@@ -1365,6 +1421,27 @@ function togH(hid,d){
 function delHabit(id){const h=S.habits.find(h=>h.id===id);if(!h||!confirm('Delete habit "'+h.name+'" and all check-ins?'))return;S.habits=S.habits.filter(h=>h.id!==id);Object.keys(S.hchecks).forEach(k=>{if(k.startsWith(id+'_'))delete S.hchecks[k];});rHV();rHSL();save();}
 function togPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;const t=p.tasks.find(t=>t.id===tid);if(t){t.done=!t.done;rPD(pid);rPRail();save();}}
 function delPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;p.tasks=p.tasks.filter(t=>t.id!==tid);rPD(pid);rPRail();save();}
+function reorderProjects(from,to){
+  if(from===to)return;
+  const arr=S.projects;
+  const [moved]=arr.splice(from,1);
+  arr.splice(to,0,moved);
+  rPRail();save();
+}
+
+// Open project editor from the rail (sets apid so editCurProj works)
+function openEditProj(id){
+  const proj=S.projects.find(p=>p.id===id);if(!proj)return;
+  epid=proj.id;spc=proj.color;
+  document.getElementById('pm-t').textContent='Edit project';
+  document.getElementById('pn').value=proj.name;
+  document.getElementById('pd').value=proj.desc||'';
+  document.getElementById('pdl').value=proj.deadline||'';
+  mkCS('pc-colors',PCOLS,proj.color,'spc');
+  openMo('mo-p');
+  setTimeout(()=>document.getElementById('pn').focus(),150);
+}
+
 function delProj(id){const p=S.projects.find(p=>p.id===id);if(!p||!confirm('Delete "'+p.name+'" and all tasks?'))return;S.projects=S.projects.filter(p=>p.id!==id);if(S.apid===id){S.apid=null;showWV();}rPRail();save();}
 
 // ── MODALS ────────────────────────────────────────────────────────
@@ -1442,16 +1519,52 @@ function delTag(i){const tag=S.tags[i];if(!tag)return;const cnt=S.tasks.filter(t
 function chTC(i,c){if(S.tags[i]){S.tags[i].color=c;rTM();save();}}
 document.getElementById('tmn').addEventListener('keydown',e=>{if(e.key==='Enter')addTag();});
 
-function mkCS(wid,cols,sel,varN){const w=document.getElementById(wid);w.innerHTML=cols.map(c=>'<button class="csb'+(c===sel?' sel':'')+'" style="background:'+c+'" onclick="'+varN+'=\''+c+'\';document.querySelectorAll(\'#'+wid+' .csb\').forEach(b=>b.classList.toggle(\'sel\',b.style.background===\''+c+'\'));)" title="'+c+'"></button>').join('');}
+function mkCS(wid,cols,sel,varN){
+  const w=document.getElementById(wid);
+  w.innerHTML='';
+  cols.forEach(col=>{
+    const b=document.createElement('button');
+    b.className='csb'+(col===sel?' sel':'');
+    b.style.background=col;
+    b.title=col;
+    b.addEventListener('click',()=>{
+      if(varN==='spc')spc=col; else if(varN==='shc')shc=col;
+      w.querySelectorAll('.csb').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+    w.appendChild(b);
+  });
+}
 
 function openNewProj(){epid=null;spc=PCOLS[0];document.getElementById('pm-t').textContent='New project';document.getElementById('pn').value='';document.getElementById('pd').value='';document.getElementById('pdl').value='';mkCS('pc-colors',PCOLS,spc,'spc');openMo('mo-p');setTimeout(()=>document.getElementById('pn').focus(),150);}
 function editCurProj(){if(!S.apid)return;const proj=S.projects.find(p=>p.id===S.apid);if(!proj)return;epid=proj.id;spc=proj.color;document.getElementById('pm-t').textContent='Edit project';document.getElementById('pn').value=proj.name;document.getElementById('pd').value=proj.desc||'';document.getElementById('pdl').value=proj.deadline||'';mkCS('pc-colors',PCOLS,proj.color,'spc');openMo('mo-p');setTimeout(()=>document.getElementById('pn').focus(),150);}
-function saveProj(){const name=document.getElementById('pn').value.trim();if(!name){document.getElementById('pn').focus();return;}const desc=document.getElementById('pd').value.trim(),deadline=document.getElementById('pdl').value;if(epid!==null){const p=S.projects.find(p=>p.id===epid);if(p){p.name=name;p.desc=desc;p.deadline=deadline;p.color=spc;}}else{const p={id:npid++,name,desc,deadline,color:spc,tasks:[]};S.projects.push(p);S.apid=p.id;}closeMo('mo-p');const wasEdit=epid!==null;epid=null;S.stab='week';switchTab('week');if(!S._railOpen)S._railOpen={};if(S.apid)S._railOpen[S.apid]=true;rPRail();if(wasEdit&&S.apid&&document.getElementById('pview').classList.contains('active'))rPD(S.apid);save();}
+function saveProj(){
+  const name=document.getElementById('pn').value.trim();
+  if(!name){document.getElementById('pn').focus();return;}
+  const desc=document.getElementById('pd').value.trim(),deadline=document.getElementById('pdl').value;
+  const wasEdit=epid!==null;
+  if(wasEdit){
+    const p=S.projects.find(p=>p.id===epid);
+    if(p){p.name=name;p.desc=desc;p.deadline=deadline;p.color=spc;}
+  }else{
+    const p={id:npid++,name,desc,deadline,color:spc,tasks:[]};
+    S.projects.push(p);
+    if(!S._railOpen)S._railOpen={};
+    S._railOpen[p.id]=true;
+  }
+  closeMo('mo-p');
+  const editedId=epid;
+  epid=null;
+  // refresh rail; if we were viewing this project's full detail, refresh that too
+  rPRail();
+  if(wasEdit && S.apid===editedId && document.getElementById('pview').classList.contains('active')) rPD(editedId);
+  save();
+}
 document.getElementById('pn').addEventListener('keydown',e=>{if(e.key==='Escape')closeMo('mo-p');});
 
-function openNewPT(){if(!S.apid)return;eptid=null;document.getElementById('pt-t').textContent='Add task';document.getElementById('ptn').value='';document.getElementById('ptpri').value='normal';document.getElementById('ptdue').value='';document.getElementById('ptnotes').value='';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
-function editPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;const t=p.tasks.find(t=>t.id===tid);if(!t)return;eptid=tid;S.apid=pid;document.getElementById('pt-t').textContent='Edit task';document.getElementById('ptn').value=t.text;document.getElementById('ptpri').value=t.priority||'normal';document.getElementById('ptdue').value=t.due||'';document.getElementById('ptnotes').value=t.notes||'';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
-function savePT(){const text=document.getElementById('ptn').value.trim();if(!text){document.getElementById('ptn').focus();return;}const pri=document.getElementById('ptpri').value,due=document.getElementById('ptdue').value,notes=document.getElementById('ptnotes').value.trim();const p=S.projects.find(p=>p.id===S.apid);if(!p)return;if(eptid!==null){const t=p.tasks.find(t=>t.id===eptid);if(t){t.text=text;t.priority=pri;t.due=due;t.notes=notes;}}else{p.tasks.push({id:nptid++,text,priority:pri,due,notes,done:false});}closeMo('mo-pt');eptid=null;rPD(S.apid);rPRail();save();}
+function openNewPT(){if(!S.apid)return;eptid=null;document.getElementById('pt-t').textContent='Add task';document.getElementById('ptn').value='';document.getElementById('ptpri').value='normal';document.getElementById('ptdue').value='';document.getElementById('ptnotes').value='';document.getElementById('pttime').value='';document.getElementById('ptdur').value='';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
+function editPT(pid,tid){const p=S.projects.find(p=>p.id===pid);if(!p)return;const t=p.tasks.find(t=>t.id===tid);if(!t)return;eptid=tid;S.apid=pid;document.getElementById('pt-t').textContent='Edit task';document.getElementById('ptn').value=t.text;document.getElementById('ptpri').value=t.priority||'normal';document.getElementById('ptdue').value=t.due||'';document.getElementById('ptnotes').value=t.notes||'';document.getElementById('pttime').value=t.time||'';document.getElementById('ptdur').value=t.dur||'';openMo('mo-pt');setTimeout(()=>document.getElementById('ptn').focus(),150);}
+function savePT(){const text=document.getElementById('ptn').value.trim();if(!text){document.getElementById('ptn').focus();return;}const pri=document.getElementById('ptpri').value,due=document.getElementById('ptdue').value,notes=document.getElementById('ptnotes').value.trim();const time=document.getElementById('pttime').value,dur=document.getElementById('ptdur').value;const p=S.projects.find(p=>p.id===S.apid);if(!p)return;if(eptid!==null){const t=p.tasks.find(t=>t.id===eptid);if(t){t.text=text;t.priority=pri;t.due=due;t.notes=notes;t.time=time;t.dur=dur;}}else{p.tasks.push({id:nptid++,text,priority:pri,due,notes,done:false,time,dur});}closeMo('mo-pt');eptid=null;rPD(S.apid);rPRail();save();}
 document.getElementById('ptn').addEventListener('keydown',e=>{if(e.key==='Escape')closeMo('mo-pt');});
 
 function openHabitM(){ehid=null;shc=HCOLS[0];document.getElementById('hm-t').textContent='New habit';document.getElementById('hn').value='';document.getElementById('hemo').value='';document.getElementById('hgoal').value='7';mkCS('h-colors',HCOLS,shc,'shc');openMo('mo-h');setTimeout(()=>document.getElementById('hn').focus(),150);}

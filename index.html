@@ -433,7 +433,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <button class="bti" id="wadb" onclick="openAddM('backlog')" style="font-size:18px">+</button>
   </div>
   <div class="fbr" id="fbr"><span>&#127919; Focus mode</span><button onclick="togFocus()">Turn off</button></div>
-  <!-- WEEK + PROJECTS SPLIT -->
   <div class="week-split" id="gv">
     <div class="week-main-area"><div class="wg" id="wg"></div></div>
     <aside class="proj-rail" id="proj-rail">
@@ -444,9 +443,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
       <div class="proj-rail-body" id="proj-rail-body"></div>
     </aside>
   </div>
-  <!-- PROJECT DETAIL (when a project opened fully) -->
   <div class="pview" id="pview"><div class="phr" id="phr"></div><div class="pts" id="ptasks"></div></div>
-  <!-- HABITS -->
   <div class="hview" id="hview">
     <div class="hstats" id="hstats"></div>
     <div id="hgw"></div>
@@ -454,7 +451,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
   </div>
 </main>
 
-<!-- MOBILE BOTTOM TABS -->
 <nav class="mobile-tabs" id="mobile-tabs">
   <button class="mtab active" id="mtab-week" onclick="mobileTab('week')"><span class="mt-ic">&#128197;</span>Week</button>
   <button class="mtab" id="mtab-projects" onclick="mobileTab('projects')"><span class="mt-ic">&#128193;</span>Projects</button>
@@ -462,7 +458,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
   <button class="mtab" id="mtab-add" onclick="openAddM('backlog')"><span class="mt-ic">&#10133;</span>Add</button>
 </nav>
 
-<!-- TASK MODAL -->
 <div class="mo" id="mo-t" onclick="closeMo('mo-t',event)">
   <div class="md">
     <div class="mdt" id="t-title">New task</div>
@@ -496,7 +491,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac"><button class="bmd bg" onclick="closeMo('mo-t')">Cancel</button><button class="bmd bp" onclick="saveTask()">Save</button></div>
   </div>
 </div>
-<!-- STATS MODAL -->
 <div class="mo" id="mo-s" onclick="closeMo('mo-s',event)">
   <div class="md smd">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px"><div class="mdt" style="margin:0">&#128202; Statistics</div><button class="bti" onclick="closeMo('mo-s')" style="font-size:14px">&#10005;</button></div>
@@ -506,7 +500,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac" style="margin-top:15px"><button class="bmd bg" onclick="closeMo('mo-s')">Close</button></div>
   </div>
 </div>
-<!-- TAG MODAL -->
 <div class="mo" id="mo-tag" onclick="closeMo('mo-tag',event)">
   <div class="md tmmd">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><div class="mdt" style="margin:0">&#127991; Tags</div><button class="bti" onclick="closeMo('mo-tag')" style="font-size:14px">&#10005;</button></div>
@@ -516,7 +509,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac" style="margin-top:11px"><button class="bmd bg" onclick="closeMo('mo-tag')">Done</button></div>
   </div>
 </div>
-<!-- PROJECT MODAL -->
 <div class="mo" id="mo-p" onclick="closeMo('mo-p',event)">
   <div class="md" style="width:500px">
     <div class="mdt" id="pm-t">New project</div>
@@ -527,7 +519,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac"><button class="bmd bg" onclick="closeMo('mo-p')">Cancel</button><button class="bmd bp" onclick="saveProj()">Save</button></div>
   </div>
 </div>
-<!-- PROJECT TASK MODAL -->
 <div class="mo" id="mo-pt" onclick="closeMo('mo-pt',event)">
   <div class="md" style="width:420px">
     <div class="mdt" id="pt-t">Add task</div>
@@ -555,7 +546,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac"><button class="bmd bg" onclick="closeMo('mo-pt')">Cancel</button><button class="bmd bp" onclick="savePT()">Save</button></div>
   </div>
 </div>
-<!-- HABIT MODAL -->
 <div class="mo" id="mo-h" onclick="closeMo('mo-h',event)">
   <div class="md" style="width:400px">
     <div class="mdt" id="hm-t">New habit</div>
@@ -566,7 +556,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
     <div class="mac"><button class="bmd bg" onclick="closeMo('mo-h')">Cancel</button><button class="bmd bp" onclick="saveHabit()">Save</button></div>
   </div>
 </div>
-<!-- SETUP PANEL -->
 <div class="setup-ov" id="setup-ov" style="display:none">
   <div class="setup-bx">
     <div class="setup-logo">WeekPlan &mdash; Cloud Storage Setup</div>
@@ -580,11 +569,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
       <div class="setup-step"><div class="setup-num">1</div><div class="setup-stxt">V&#224;o <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> &#8594; Sign up mi&#7877;n ph&#237; (Google/GitHub)</div></div>
       <div class="setup-step"><div class="setup-num">2</div><div class="setup-stxt">V&#224;o <strong>API Keys</strong> &#8594; copy <strong>Master Key</strong> (<code>$2a$10$...</code>)</div></div>
       <div class="setup-step"><div class="setup-num">3</div><div class="setup-stxt">Paste v&#224;o &#244; d&#432;&#7899;i &#8594; b&#7845;m <strong>Connect</strong>. Free: 10,000 req/th&#225;ng.</div></div>
-      <div class="setup-row">
-        <input class="setup-inp" id="jb-inp" type="text" placeholder="$2a$10$..." autocomplete="off">
-        <button class="bmd bp" onclick="connectJBin()" style="flex-shrink:0;padding:8px 14px">Connect</button>
+      <div class="setup-row" style="flex-direction: column; gap: 8px;">
+        <input class="setup-inp" id="jb-inp" type="text" placeholder="Master Key (để trống nếu dùng key mặc định)..." autocomplete="off">
+        <input class="setup-inp" id="jb-binid-inp" type="text" placeholder="[Tùy chọn] Nhập Bin ID cũ để khôi phục dữ liệu..." autocomplete="off">
+        <button class="bmd bp" onclick="connectJBin()" style="padding:8px 14px; width: 100%">Connect / Restore</button>
       </div>
-      <div class="setup-err" id="jb-err">Key kh&#244;ng h&#7907;p l&#7879; ho&#7863;c l&#7895;i k&#7871;t n&#7889;i.</div>
+      <div class="setup-err" id="jb-err">Lỗi kết nối.</div>
     </div>
     <div id="stab-gas-c" style="display:none">
       <div class="setup-step"><div class="setup-num">1</div><div class="setup-stxt">M&#7903; <a href="https://script.google.com" target="_blank">script.google.com</a> &#8594; New project &#8594; paste file <code>weekplan-gas.js</code></div></div>
@@ -601,7 +591,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);display:flex;hei
   </div>
 </div>
 
-<!-- SCHEDULE TASK MODAL -->
 <div class="mo" id="mo-sched" onclick="closeMo('mo-sched',event)">
   <div class="md schedule-mo">
     <div class="mdt" id="sched-title">Assign to week</div>
@@ -635,7 +624,7 @@ function getStored(k) {
 function loadKeys() {
   // Hardcoded credentials (baked in at build time)
   JBIN_KEY = '$2a$10$/lajMqDZerxPOih7aN5NBeAAQoKvb8pv/mMEBS1EooR/6iicy5jC.';
-  GAS_URL  = 'https://script.google.com/macros/s/AKfycbyAK2SSWpgUyJzyTx3RsbPsxpJpXxKAjYu3SF8J6fp5BIYG3buNE6xYe8O7I4B0FZ5a/exec';
+  GAS_URL  = 'https://script.google.com/macros/s/AKfycbxd_mfLVrh3v6pJhb_LLZkdiTJFU4A-O85p1Ee99q7rF9HNqjGaO3egP87pDicF2YQa/exec';
   // binId is auto-generated on first save — still load from storage
   binId    = getStored('wplan_binid');
   // Override with stored key if user connected manually (allows key rotation)
@@ -1589,23 +1578,45 @@ function switchSetupTab(tab){
 function updateSetupStatus(){
   const el=document.getElementById('setup-status');
   const parts=[];
-  if(JBIN_KEY)parts.push('<span style="color:var(--ac)">\u2713 JSONBin connected</span> <span style="color:var(--re);cursor:pointer;font-size:11px" onclick="disconnectJBin()">[disconnect]</span>');
+  if(JBIN_KEY)parts.push('<span style="color:var(--ac)">\u2713 JSONBin connected</span><br><span style="color:var(--mu);font-size:11px">Bin ID: <b>'+(binId||'Chưa có')+'</b> (Hãy lưu lại mã này!)</span> <span style="color:var(--re);cursor:pointer;font-size:11px" onclick="disconnectJBin()">[disconnect]</span>');
   if(GAS_URL) parts.push('<span style="color:var(--ac)">\u2713 GAS connected</span> <span style="color:var(--re);cursor:pointer;font-size:11px" onclick="disconnectGAS()">[disconnect]</span>');
   if(!parts.length){el.style.display='none';return;}
   el.style.display='block';el.innerHTML=parts.join('<br>');
 }
 async function connectJBin(){
-  const key=document.getElementById('jb-inp').value.trim();
-  const err=document.getElementById('jb-err');err.style.display='none';
-  if(!key||!key.startsWith('$2a$')){err.style.display='block';return;}
+  // Ưu tiên dùng key người dùng nhập, nếu không có thì lấy key mặc định trong code
+  const key = document.getElementById('jb-inp').value.trim() || JBIN_KEY;
+  const manualBinId = document.getElementById('jb-binid-inp').value.trim();
+  const err = document.getElementById('jb-err'); 
+  err.style.display = 'none';
+  
+  if(!key || !key.startsWith('$2a$')){ err.textContent='Master Key không hợp lệ.'; err.style.display='block'; return; }
+  
   try{
-    const r=await fetch(JBIN_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'weekplan','X-Bin-Private':'true'},body:JSON.stringify({_init:true})});
-    if(!r.ok){err.style.display='block';return;}
-    const j=await r.json();
-    persist('wplan_jbkey',key);persist('wplan_binid',j.metadata.id);
-    document.getElementById('jb-inp').value='';
-    closeSetup();location.reload();
-  }catch(e){err.style.display='block';}
+    if (manualBinId) {
+      // Logic khôi phục: Tải thử dữ liệu từ Bin ID cũ
+      const r = await fetch(JBIN_URL + '/' + manualBinId + '/latest?meta=false', { headers: { 'X-Master-Key': key } });
+      if(!r.ok){ err.textContent='Bin ID không tồn tại hoặc sai Master Key.'; err.style.display='block'; return; }
+      persist('wplan_jbkey', key);
+      persist('wplan_binid', manualBinId);
+    } else {
+      // Logic mặc định: Tạo Bin mới
+      const r = await fetch(JBIN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Master-Key': key, 'X-Bin-Name': 'weekplan', 'X-Bin-Private': 'true' }, body: JSON.stringify({_init:true}) });
+      if(!r.ok){ err.textContent='Lỗi tạo Bin mới.'; err.style.display='block'; return; }
+      const j = await r.json();
+      persist('wplan_jbkey', key);
+      persist('wplan_binid', j.metadata.id);
+    }
+    
+    // Reset form và reload app
+    document.getElementById('jb-inp').value = '';
+    document.getElementById('jb-binid-inp').value = '';
+    closeSetup(); 
+    location.reload();
+  } catch(e) { 
+    err.textContent='Lỗi kết nối tới JSONBin.'; 
+    err.style.display='block'; 
+  }
 }
 function disconnectJBin(){if(!confirm('Disconnect JSONBin?'))return;unpersist('wplan_jbkey');unpersist('wplan_binid');location.reload();}
 async function connectGAS(){
@@ -1685,9 +1696,9 @@ async function modalSyncToCal(){
   const tag=document.getElementById('tt').value.trim();
   const notes=document.getElementById('tnotes').value.trim();
   if(day==='backlog'){showToast('Task cần có ngày.');return;}
-  showToast('Đang thêm vào Google Calendar...');
-  const ok=await gcalPush(text,day,time,dur,(tag?'['+tag+'] ':'')+notes);
-  showToast(ok?'✓ Đã thêm vào Google Calendar':'⚠ Sync thất bại — kiểm tra kết nối GAS');
+  showToast('Đang thêm/cập nhật trên Calendar...');
+  const ok=await gcalPush(text,day,time,dur,(tag?'['+tag+'] ':'')+notes, '', 'task_'+eid);
+  showToast(ok?'✓ Đã sync Google Calendar':'⚠ Sync thất bại — kiểm tra kết nối GAS');
 }
 
 // Add a project task to calendar
@@ -1709,20 +1720,20 @@ async function syncProjTaskToGCal(projId, taskId) {
   const p = S.projects.find(p => p.id === projId); if (!p) return;
   const t = p.tasks.find(t => t.id === taskId); if (!t) return;
   if (!t.scheduledDay) { showToast('Task chưa xếp vào tuần.'); return; }
-  showToast('Đang thêm vào Google Calendar...');
-  const ok = await gcalPush(t.text, t.scheduledDay, t.time||'', t.dur||'', '[' + p.name + '] ' + (t.notes||''), p.color||'');
-  showToast(ok ? '\u2713 Đã thêm (màu ' + p.name + ')' : '\u26a0 Sync thất bại — kiểm tra GAS');
+  showToast('Đang thêm/cập nhật trên Calendar...');
+  const ok = await gcalPush(t.text, t.scheduledDay, t.time||'', t.dur||'', '[' + p.name + '] ' + (t.notes||''), p.color||'', 'proj_'+projId+'_'+taskId);
+  showToast(ok ? '\u2713 Đã sync (màu ' + p.name + ')' : '\u26a0 Sync thất bại — kiểm tra GAS');
 }
 
 // ── GAS auto-sync to Google Calendar ─────────────────────────────
 // Pushes a task as a real event into the user's Google Calendar via GAS
-async function gcalPush(title, dateKey, time, dur, details, colorHex) {
+async function gcalPush(title, dateKey, time, dur, details, colorHex, syncId) {
   if (!GAS_URL) { showToast('Cần kết nối Google Apps Script trước (nút ☁).'); return false; }
   try {
     const r = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gcal', title, dateKey, time, dur, details, colorHex: colorHex||'' })
+      body: JSON.stringify({ action: 'gcal', title, dateKey, time, dur, details, colorHex: colorHex||'', syncId: syncId||'' })
     });
     const txt = await r.text();
     let j;
@@ -1761,18 +1772,18 @@ async function syncAllToCalendar() {
   const items = [];
   S.tasks.forEach(t => {
     if (t.day && t.day !== 'backlog' && !t.done) {
-      // standalone task: no color (default Calendar color)
-      items.push({ title: t.text, dateKey: t.day, time: t.time||'', dur: t.dur||'', details: (t.tag?'['+t.tag+'] ':'') + (t.notes||''), colorHex: '' });
+      // standalone task: no color, attach syncId
+      items.push({ title: t.text, dateKey: t.day, time: t.time||'', dur: t.dur||'', details: (t.tag?'['+t.tag+'] ':'') + (t.notes||''), colorHex: '', syncId: 'task_'+t.id });
     }
   });
   S.projects.forEach(p => (p.tasks||[]).forEach(pt => {
     if (pt.scheduledDay && !pt.done) {
-      // project task: tag event with the project's color
-      items.push({ title: pt.text, dateKey: pt.scheduledDay, time: pt.time||'', dur: pt.dur||'', details: '[' + p.name + '] ' + (pt.notes||''), colorHex: p.color||'' });
+      // project task: tag event with the project's color, attach syncId
+      items.push({ title: pt.text, dateKey: pt.scheduledDay, time: pt.time||'', dur: pt.dur||'', details: '[' + p.name + '] ' + (pt.notes||''), colorHex: p.color||'', syncId: 'proj_'+p.id+'_'+pt.id });
     }
   }));
   if (items.length === 0) { showToast('Không có task nào (đã xếp ngày & chưa xong) để sync.'); return; }
-  if (!confirm('Thêm ' + items.length + ' task vào Google Calendar?\n\n(Mỗi task = 1 sự kiện. Task đã xong hoặc chưa có ngày sẽ bỏ qua.)')) return;
+  if (!confirm('Thêm/Cập nhật ' + items.length + ' task trên Google Calendar?\n\n(Chỉ sync các task chưa xong và đã có ngày. Code tự động tránh tạo sự kiện trùng lặp.)')) return;
 
   showToast('Đang sync ' + items.length + ' task...');
   try {
@@ -1790,7 +1801,7 @@ async function syncAllToCalendar() {
       return;
     }
     if (j.ok) {
-      showToast('\u2713 Đã thêm ' + (j.created||items.length) + ' sự kiện vào Calendar');
+      showToast('\u2713 Mới: ' + j.created + ' | Cập nhật: ' + j.updated);
     } else {
       console.error('GAS batch error:', j.error);
       showToast('\u26a0 ' + (j.error||'Sync failed').slice(0,70));
